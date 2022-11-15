@@ -12,6 +12,7 @@ import { AuthModule } from './auth/auth.module';
 import { BlogExistsValidator } from './validators/blog-exists-validator';
 import { BlogsRepository } from './blogs/blogs.repository';
 import { Blog, BlogSchema } from './blogs/entities/blog.entity';
+import { TestingModule } from './testing/testing.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { Blog, BlogSchema } from './blogs/entities/blog.entity';
     BlogsModule,
     PostsModule,
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
+    TestingModule,
   ],
   controllers: [AppController],
   providers: [
