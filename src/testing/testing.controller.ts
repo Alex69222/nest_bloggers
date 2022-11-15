@@ -16,7 +16,7 @@ export class TestingController {
         'mongodb+srv://it-inc-db:6hAd5Ck2v3nrsVVm@it-inc-db.asa7p.mongodb.net/bloggers-2-0?retryWrites=true&w=majority',
       );
       await mongoose.connection.db.dropDatabase();
-      return HttpStatus.NO_CONTENT;
+      return HttpStatus.OK;
     } catch (e) {
       console.log(e);
       throw new BadRequestException([

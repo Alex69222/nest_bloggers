@@ -5,7 +5,7 @@ import { Transform } from 'class-transformer';
 import { trimValidatedString } from '../../helpers/validation-helpers';
 import { BlogExistsValidator } from '../../validators/blog-exists-validator';
 
-export class UpdatePostDto extends PartialType(CreatePostDto) {
+export class UpdatePostDto {
   @MaxLength(30)
   @IsNotEmpty()
   @Transform(trimValidatedString)

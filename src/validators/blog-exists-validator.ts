@@ -17,7 +17,7 @@ export class BlogExistsValidator implements ValidatorConstraintInterface {
     console.log(id);
     try {
       const blog = await this.blogsRepository.findOne(id);
-      console.log(blog);
+      // console.log(blog);
       if (!blog) return false;
     } catch (e) {
       console.log(e);
