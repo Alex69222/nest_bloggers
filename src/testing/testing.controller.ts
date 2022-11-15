@@ -3,12 +3,14 @@ import {
   Delete,
   BadRequestException,
   HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import { TestingService } from './testing.service';
 import mongoose from 'mongoose';
 const url = process.env.MONGOOSE_URI;
 @Controller('testing')
 export class TestingController {
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('/all-data')
   async clearDB() {
     try {
