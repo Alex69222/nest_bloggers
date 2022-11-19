@@ -33,7 +33,9 @@ export class BlogsRepository implements IBlogsRepository {
   }
 
   async findAll(query: QueryType): Promise<PaginationViewType<OutputBlogDto>> {
-    const totalCount = await this.blogModel.count();
+    const totalCount = await this.blogModel.count({
+      name: { $regex: query.searchNameTerm, $options: '-i' },
+    });
     const blogs = await this.blogModel
       .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
       .sort([[query.sortBy, query.sortDirection]])

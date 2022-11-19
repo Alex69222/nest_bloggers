@@ -32,7 +32,9 @@ export class PostsRepository {
   }
 
   async findAll(query: QueryType): Promise<PaginationViewType<OutputPostDto>> {
-    const totalCount = await this.postModel.count();
+    const totalCount = await this.postModel.count({
+      name: { $regex: query.searchNameTerm, $options: '-i' },
+    });
     const posts = await this.postModel
       .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
       .sort([[query.sortBy, query.sortDirection]])
