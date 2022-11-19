@@ -37,13 +37,13 @@ export class PostsRepository {
     });
     const posts = await this.postModel
       .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
-      .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
-      .skip(query.pageSize * (query.pageNumber - 1))
-      .limit(query.pageSize)
       .populate({
         path: 'blogName',
         transform: returnNameFromPopulation,
       })
+      .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
+      .skip(query.pageSize * (query.pageNumber - 1))
+      .limit(query.pageSize)
       .lean();
     return transformToPaginationView<OutputPostDto>(
       totalCount,
