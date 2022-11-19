@@ -1,5 +1,6 @@
 export class OutputBlogDto {
   id: string;
   name: string;
-  youtubeUrl: string;
+  websiteUrl: string;
+  createdAt: string;
 }

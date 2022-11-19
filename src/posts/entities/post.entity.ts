@@ -15,5 +15,7 @@ export class Post {
   blogId: string;
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' })
   blogName: Blog;
+  @Prop({ required: true })
+  createdAt: string;
 }
 export const PostSchema = SchemaFactory.createForClass(Post);

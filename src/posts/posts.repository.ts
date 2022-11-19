@@ -15,6 +15,7 @@ export class PostsRepository {
   async create(createPostDto: CreatePostDto): Promise<OutputPostDto> {
     const createdPost = new this.postModel({
       ...createPostDto,
+      createdAt: new Date().toISOString(),
       blogName: createPostDto.blogId,
     });
     await createdPost.save();

@@ -19,7 +19,10 @@ export class BlogsRepository implements IBlogsRepository {
   constructor(@InjectModel(Blog.name) private blogModel: Model<BlogDocument>) {}
 
   async create(createBlogDto: CreateBlogDto): Promise<OutputBlogDto> {
-    const createdBlog = new this.blogModel(createBlogDto);
+    const createdBlog = new this.blogModel({
+      ...createBlogDto,
+      createdAt: new Date().toISOString(),
+    });
     await createdBlog.save();
     return idMapper(createdBlog.toObject());
   }
