@@ -38,7 +38,7 @@ export class BlogsRepository implements IBlogsRepository {
     });
     const blogs = await this.blogModel
       .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
-      .sort([[query.sortBy, query.sortDirection]])
+      .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
       .skip(query.pageSize * (query.pageNumber - 1))
       .limit(query.pageSize)
       .lean();

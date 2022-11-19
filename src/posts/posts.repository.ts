@@ -37,7 +37,7 @@ export class PostsRepository {
     });
     const posts = await this.postModel
       .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
-      .sort([[query.sortBy, query.sortDirection]])
+      .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
       .skip(query.pageSize * (query.pageNumber - 1))
       .limit(query.pageSize)
       .populate({
@@ -59,7 +59,7 @@ export class PostsRepository {
     const totalCount = await this.postModel.count({ blogId: id });
     const posts = await this.postModel
       .find({ blogId: id })
-      .sort([[query.sortBy, query.sortDirection]])
+      .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
       .skip(query.pageSize * (query.pageNumber - 1))
       .limit(query.pageSize)
       .populate({
