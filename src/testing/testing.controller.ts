@@ -6,27 +6,25 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { TestingService } from './testing.service';
-import mongoose from 'mongoose';
+import mongoose, { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Blog, BlogDocument } from '../blogs/entities/blog.entity';
+import { Post, PostDocument } from '../posts/entities/post.entity';
+
 const url = process.env.MONGOOSE_URI;
+
 @Controller('testing')
 export class TestingController {
+  constructor(
+    @InjectModel(Blog.name) private blogModel: Model<BlogDocument>,
+    @InjectModel(Post.name) private postModel: Model<PostDocument>,
+  ) {}
+
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('/all-data')
   async clearDB() {
-    try {
-      await mongoose.connect(
-        'mongodb+srv://it-inc-db:6hAd5Ck2v3nrsVVm@it-inc-db.asa7p.mongodb.net/bloggers-2-0?retryWrites=true&w=majority',
-      );
-      await mongoose.connection.db.dropDatabase();
-      return HttpStatus.NO_CONTENT;
-    } catch (e) {
-      console.log(e);
-      throw new BadRequestException([
-        {
-          field: 'db',
-          message: 'An error occurred during clearing DB',
-        },
-      ]);
-    }
+    await this.blogModel.deleteMany({});
+    await this.postModel.deleteMany({});
+    return;
   }
 }

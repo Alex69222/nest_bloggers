@@ -40,7 +40,8 @@ export class BlogsRepository implements IBlogsRepository {
     const blog = await this.blogModel.findById(id);
     if (!blog) return false;
     blog.name = updateBlogDto.name;
-    blog.youtubeUrl = updateBlogDto.youtubeUrl;
+    blog.description = updateBlogDto.description;
+    blog.websiteUrl = updateBlogDto.websiteUrl;
     await blog.save();
     return true;
   }

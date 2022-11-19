@@ -14,7 +14,12 @@ export class CreateBlogDto {
   @Transform(trimValidatedString)
   @IsString()
   name: string;
-  @MaxLength(100)
+  @MaxLength(500)
+  @IsNotEmpty()
+  @Transform(trimValidatedString)
+  @IsString()
+  description: string;
   @IsUrl()
-  youtubeUrl: string;
+  @MaxLength(100)
+  websiteUrl: string;
 }
