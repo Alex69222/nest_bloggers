@@ -6,6 +6,11 @@ import { Post, PostDocument } from './entities/post.entity';
 import mongoose, { isValidObjectId, Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { idMapper } from '../helpers/id-mapper';
+import { QueryType } from '../helpers/queryHandler';
+import {
+  PaginationViewType,
+  transformToPaginationView,
+} from '../helpers/transformToPaginationView';
 
 const returnNameFromPopulation = (doc) => doc.name;
 
@@ -26,15 +31,46 @@ export class PostsRepository {
     return idMapper(createdPost.toObject());
   }
 
-  async findAll(): Promise<OutputPostDto[]> {
+  async findAll(query: QueryType): Promise<PaginationViewType<OutputPostDto>> {
+    const totalCount = await this.postModel.count();
     const posts = await this.postModel
-      .find()
+      .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
+      .sort([[query.sortBy, query.sortDirection]])
+      .skip(query.pageSize * (query.pageNumber - 1))
+      .limit(query.pageSize)
       .populate({
         path: 'blogName',
         transform: returnNameFromPopulation,
       })
       .lean();
-    return idMapper(posts);
+    return transformToPaginationView<OutputPostDto>(
+      totalCount,
+      query.pageSize,
+      query.pageNumber,
+      idMapper(posts),
+    );
+  }
+  async findAllPostsForBlog(
+    query: QueryType,
+    id: string,
+  ): Promise<PaginationViewType<OutputPostDto>> {
+    const totalCount = await this.postModel.count({ blogId: id });
+    const posts = await this.postModel
+      .find({ blogId: id })
+      .sort([[query.sortBy, query.sortDirection]])
+      .skip(query.pageSize * (query.pageNumber - 1))
+      .limit(query.pageSize)
+      .populate({
+        path: 'blogName',
+        transform: returnNameFromPopulation,
+      })
+      .lean();
+    return transformToPaginationView<OutputPostDto>(
+      totalCount,
+      query.pageSize,
+      query.pageNumber,
+      idMapper(posts),
+    );
   }
 
   async findOne(id: string): Promise<OutputPostDto | null> {

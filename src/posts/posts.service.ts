@@ -3,6 +3,8 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsRepository } from './posts.repository';
 import { OutputPostDto } from './dto/output-post.dto';
+import { PaginationViewType } from '../helpers/transformToPaginationView';
+import { QueryType } from '../helpers/queryHandler';
 
 @Injectable()
 export class PostsService {
@@ -11,8 +13,8 @@ export class PostsService {
     return this.postsRepository.create(createPostDto);
   }
 
-  async findAll(): Promise<OutputPostDto[]> {
-    return this.postsRepository.findAll();
+  async findAll(query: QueryType): Promise<PaginationViewType<OutputPostDto>> {
+    return this.postsRepository.findAll(query);
   }
 
   async findOne(id: string): Promise<OutputPostDto | null> {

@@ -6,10 +6,15 @@ import { Blog, BlogDocument } from './entities/blog.entity';
 import mongoose, { isValidObjectId, Model } from 'mongoose';
 import { idMapper } from '../helpers/id-mapper';
 import { OutputBlogDto } from './dto/output-blog.dto';
+import { QueryType } from '../helpers/queryHandler';
+import {
+  PaginationViewType,
+  transformToPaginationView,
+} from '../helpers/transformToPaginationView';
 
 export interface IBlogsRepository {
   create: (createBlogDto: CreateBlogDto) => Promise<OutputBlogDto>;
-  findAll: () => Promise<OutputBlogDto[]>;
+  findAll: (query: QueryType) => Promise<PaginationViewType<OutputBlogDto>>;
   findOne: (id: string) => Promise<OutputBlogDto | null>;
   update: (id: string, updateBlogDto: UpdateBlogDto) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
@@ -27,9 +32,20 @@ export class BlogsRepository implements IBlogsRepository {
     return idMapper(createdBlog.toObject());
   }
 
-  async findAll(): Promise<OutputBlogDto[]> {
-    const blogs = await this.blogModel.find().lean();
-    return idMapper(blogs);
+  async findAll(query: QueryType): Promise<PaginationViewType<OutputBlogDto>> {
+    const totalCount = await this.blogModel.count();
+    const blogs = await this.blogModel
+      .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
+      .sort([[query.sortBy, query.sortDirection]])
+      .skip(query.pageSize * (query.pageNumber - 1))
+      .limit(query.pageSize)
+      .lean();
+    return transformToPaginationView<OutputBlogDto>(
+      totalCount,
+      query.pageSize,
+      query.pageNumber,
+      idMapper(blogs),
+    );
   }
 
   async findOne(id: string): Promise<OutputBlogDto | null> {

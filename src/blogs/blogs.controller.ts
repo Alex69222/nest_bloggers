@@ -10,12 +10,18 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { BlogsService } from './blogs.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { OutputBlogDto } from './dto/output-blog.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { queryHandler } from '../helpers/queryHandler';
+import { PaginationViewType } from '../helpers/transformToPaginationView';
+import { CreatePostDto } from '../posts/dto/create-post.dto';
+import { OutputPostDto } from '../posts/dto/output-post.dto';
+import { CreatePostForBlogDto } from '../posts/dto/create-post-for-blog.dto';
 
 @Controller('blogs')
 export class BlogsController {
@@ -25,10 +31,22 @@ export class BlogsController {
   async create(@Body() createBlogDto: CreateBlogDto): Promise<OutputBlogDto> {
     return this.blogsService.create(createBlogDto);
   }
-
+  @UseGuards(AuthGuard('basic'))
+  @Post(':id/posts')
+  async createPostForBlog(
+    @Param('id') id: string,
+    @Body() createPostForBlogDto: CreatePostForBlogDto,
+  ): Promise<OutputPostDto> {
+    const blog = await this.blogsService.findOne(id);
+    if (!blog) throw new NotFoundException();
+    return this.blogsService.createPostForBlog({
+      ...createPostForBlogDto,
+      blogId: id,
+    });
+  }
   @Get()
-  async findAll(): Promise<OutputBlogDto[]> {
-    return this.blogsService.findAll();
+  async findAll(@Query() query): Promise<PaginationViewType<OutputBlogDto>> {
+    return this.blogsService.findAll(queryHandler(query));
   }
 
   @Get(':id')
@@ -36,6 +54,15 @@ export class BlogsController {
     const blog = await this.blogsService.findOne(id);
     if (!blog) throw new NotFoundException();
     return blog;
+  }
+  @Get(':id/posts')
+  async findAllPostsForBlog(
+    @Query() query,
+    @Param('id') id: string,
+  ): Promise<PaginationViewType<OutputPostDto>> {
+    const blog = await this.blogsService.findOne(id);
+    if (!blog) throw new NotFoundException();
+    return this.blogsService.findAllPostsForBlog(queryHandler(query), id);
   }
   @UseGuards(AuthGuard('basic'))
   @HttpCode(HttpStatus.NO_CONTENT)

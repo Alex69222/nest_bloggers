@@ -10,12 +10,15 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { OutputPostDto } from './dto/output-post.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { PaginationViewType } from '../helpers/transformToPaginationView';
+import { queryHandler } from '../helpers/queryHandler';
 
 @Controller('posts')
 export class PostsController {
@@ -27,8 +30,8 @@ export class PostsController {
   }
 
   @Get()
-  async findAll(): Promise<OutputPostDto[]> {
-    return this.postsService.findAll();
+  async findAll(@Query() query): Promise<PaginationViewType<OutputPostDto>> {
+    return this.postsService.findAll(queryHandler(query));
   }
 
   @Get(':id')
