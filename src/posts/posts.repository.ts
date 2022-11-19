@@ -11,12 +11,17 @@ import {
   PaginationViewType,
   transformToPaginationView,
 } from '../helpers/transformToPaginationView';
+import { Blog } from '../blogs/entities/blog.entity';
+import { exec } from 'child_process';
 
 const returnNameFromPopulation = (doc) => doc.name;
 
 @Injectable()
 export class PostsRepository {
-  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
+  constructor(
+    @InjectModel(Post.name) private postModel: Model<PostDocument>,
+    @InjectModel(Blog.name) private blogModel: Model<PostDocument>,
+  ) {}
   async create(createPostDto: CreatePostDto): Promise<OutputPostDto> {
     const createdPost = new this.postModel({
       ...createPostDto,
@@ -32,19 +37,47 @@ export class PostsRepository {
   }
 
   async findAll(query: QueryType): Promise<PaginationViewType<OutputPostDto>> {
+    console.log(query);
     const totalCount = await this.postModel.count({
       name: { $regex: query.searchNameTerm, $options: '-i' },
     });
     const posts = await this.postModel
-      .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
-      .populate({
-        path: 'blogName',
-        transform: returnNameFromPopulation,
-      })
-      .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
-      .skip(query.pageSize * (query.pageNumber - 1))
-      .limit(query.pageSize)
-      .lean();
+      .aggregate([
+        { $match: { title: { $regex: query.searchNameTerm, $options: '-i' } } },
+        { $skip: query.pageSize * (query.pageNumber - 1) },
+        { $limit: query.pageSize },
+        {
+          $lookup: {
+            from: 'blogs',
+            localField: 'blogName',
+            foreignField: '_id',
+            as: 'blogName',
+          },
+        },
+        { $set: { blogName: '$blogName.name' } },
+      ])
+      // .lookup({
+      //   from: 'blogs',
+      //   localField: 'blogName',
+      //   foreignField: '_id',
+      //   as: 'blogName',
+      // },
+      //   )
+      // .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
+      // .populate({
+      //   path: 'blogName',
+      //   transform: returnNameFromPopulation,
+      //   // select: 'name',
+      //   // options: { sort: 'name' },
+      // })
+
+      // .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
+      // .skip(query.pageSize * (query.pageNumber - 1))
+      // .limit(query.pageSize)
+      .unwind({ path: '$blogName' })
+      .sort({ [query.sortBy]: query.sortDirection })
+      // .lean();
+      .exec();
     return transformToPaginationView<OutputPostDto>(
       totalCount,
       query.pageSize,
