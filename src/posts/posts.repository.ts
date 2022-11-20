@@ -12,7 +12,6 @@ import {
   transformToPaginationView,
 } from '../helpers/transformToPaginationView';
 import { Blog } from '../blogs/entities/blog.entity';
-import { exec } from 'child_process';
 
 const returnNameFromPopulation = (doc) => doc.name;
 
@@ -39,13 +38,13 @@ export class PostsRepository {
   async findAll(query: QueryType): Promise<PaginationViewType<OutputPostDto>> {
     console.log(query);
     const totalCount = await this.postModel.count({
-      name: { $regex: query.searchNameTerm, $options: '-i' },
+      title: { $regex: query.searchNameTerm, $options: '-i' },
     });
     const posts = await this.postModel
       .aggregate([
         { $match: { title: { $regex: query.searchNameTerm, $options: '-i' } } },
-        { $skip: query.pageSize * (query.pageNumber - 1) },
-        { $limit: query.pageSize },
+        // { $skip: query.pageSize * (query.pageNumber - 1) },
+        // { $limit: query.pageSize },
         {
           $lookup: {
             from: 'blogs',
@@ -55,14 +54,9 @@ export class PostsRepository {
           },
         },
         { $set: { blogName: '$blogName.name' } },
+        // { $sort: [[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]] },
       ])
-      // .lookup({
-      //   from: 'blogs',
-      //   localField: 'blogName',
-      //   foreignField: '_id',
-      //   as: 'blogName',
-      // },
-      //   )
+
       // .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
       // .populate({
       //   path: 'blogName',
@@ -72,10 +66,11 @@ export class PostsRepository {
       // })
 
       // .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
-      // .skip(query.pageSize * (query.pageNumber - 1))
-      // .limit(query.pageSize)
+
       .unwind({ path: '$blogName' })
       .sort({ [query.sortBy]: query.sortDirection })
+      .skip(query.pageSize * (query.pageNumber - 1))
+      .limit(query.pageSize)
       // .lean();
       .exec();
     return transformToPaginationView<OutputPostDto>(
