@@ -4,12 +4,14 @@ import { TestingController } from './testing.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Post, PostSchema } from '../posts/entities/post.entity';
 import { Blog, BlogSchema } from '../blogs/entities/blog.entity';
+import { User, UserSchema } from '../users/entities/user.entity';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Post.name, schema: PostSchema },
       { name: Blog.name, schema: BlogSchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   controllers: [TestingController],

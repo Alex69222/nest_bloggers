@@ -10,6 +10,7 @@ import mongoose, { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Blog, BlogDocument } from '../blogs/entities/blog.entity';
 import { Post, PostDocument } from '../posts/entities/post.entity';
+import { User, UserDocument } from '../users/entities/user.entity';
 
 const url = process.env.MONGOOSE_URI;
 
@@ -18,6 +19,7 @@ export class TestingController {
   constructor(
     @InjectModel(Blog.name) private blogModel: Model<BlogDocument>,
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -25,6 +27,7 @@ export class TestingController {
   async clearDB() {
     await this.blogModel.deleteMany({});
     await this.postModel.deleteMany({});
+    await this.userModel.deleteMany({});
     return;
   }
 }
