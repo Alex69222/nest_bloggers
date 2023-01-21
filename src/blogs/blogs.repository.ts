@@ -22,7 +22,6 @@ export interface IBlogsRepository {
 @Injectable()
 export class BlogsRepository implements IBlogsRepository {
   constructor(@InjectModel(Blog.name) private blogModel: Model<BlogDocument>) {}
-
   async create(createBlogDto: CreateBlogDto): Promise<OutputBlogDto> {
     const createdBlog = new this.blogModel({
       ...createBlogDto,

@@ -43,8 +43,6 @@ export class PostsRepository {
     const posts = await this.postModel
       .aggregate([
         { $match: { title: { $regex: query.searchNameTerm, $options: '-i' } } },
-        // { $skip: query.pageSize * (query.pageNumber - 1) },
-        // { $limit: query.pageSize },
         {
           $lookup: {
             from: 'blogs',
@@ -54,24 +52,11 @@ export class PostsRepository {
           },
         },
         { $set: { blogName: '$blogName.name' } },
-        // { $sort: [[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]] },
       ])
-
-      // .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
-      // .populate({
-      //   path: 'blogName',
-      //   transform: returnNameFromPopulation,
-      //   // select: 'name',
-      //   // options: { sort: 'name' },
-      // })
-
-      // .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
-
       .unwind({ path: '$blogName' })
       .sort({ [query.sortBy]: query.sortDirection })
       .skip(query.pageSize * (query.pageNumber - 1))
       .limit(query.pageSize)
-      // .lean();
       .exec();
     return transformToPaginationView<OutputPostDto>(
       totalCount,
