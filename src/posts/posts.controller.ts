@@ -74,4 +74,13 @@ export class PostsController {
     if (!post) throw new NotFoundException();
     return this.postsService.addComment(id, req.user, createCommentDto);
   }
+  @Get(':id/comments')
+  async getComments(
+    @Param('id') id: string,
+    @Query() query,
+  ): Promise<PaginationViewType<OutputCommentDto>> {
+    const post = await this.postsService.findOne(id);
+    if (!post) throw new NotFoundException();
+    return this.postsService.getPostComments(id, queryHandler(query));
+  }
 }

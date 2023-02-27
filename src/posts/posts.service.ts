@@ -7,6 +7,7 @@ import { PaginationViewType } from '../helpers/transformToPaginationView';
 import { QueryType } from '../helpers/queryHandler';
 import { CreateCommentDto } from '../comments/dto/create-comment.dto';
 import { CommentsRepository } from '../comments/entities/comments.repository';
+import { OutputCommentDto } from '../comments/dto/output-comment.dto';
 
 @Injectable()
 export class PostsService {
@@ -34,13 +35,19 @@ export class PostsService {
     return this.postsRepository.remove(id);
   }
   async addComment(
-    id: string,
+    postId: string,
     user: {
       userId: string;
       userName: string;
     },
     createCommentDto: CreateCommentDto,
   ) {
-    return this.commentsRepository.create(id, user, createCommentDto);
+    return this.commentsRepository.create(postId, user, createCommentDto);
+  }
+  async getPostComments(
+    postId: string,
+    query: QueryType,
+  ): Promise<PaginationViewType<OutputCommentDto>> {
+    return this.commentsRepository.getPostComments(postId, query);
   }
 }

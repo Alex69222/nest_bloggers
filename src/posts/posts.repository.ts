@@ -36,7 +36,6 @@ export class PostsRepository {
   }
 
   async findAll(query: QueryType): Promise<PaginationViewType<OutputPostDto>> {
-    console.log(query);
     const totalCount = await this.postModel.count({
       title: { $regex: query.searchNameTerm, $options: '-i' },
     });

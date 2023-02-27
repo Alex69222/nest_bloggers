@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import { CommentsRepository } from './entities/comments.repository';
+import { OutputCommentDto } from './dto/output-comment.dto';
 
 @Injectable()
 export class CommentsService {
+  constructor(private commentsRepository: CommentsRepository) {}
   create(createCommentDto: CreateCommentDto) {
     return 'This action adds a new comment';
   }
@@ -12,15 +15,18 @@ export class CommentsService {
     return `This action returns all comments`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} comment`;
+  async findById(id: string): Promise<OutputCommentDto | null> {
+    return this.commentsRepository.findById(id);
   }
 
-  update(id: number, updateCommentDto: UpdateCommentDto) {
-    return `This action updates a #${id} comment`;
+  async update(
+    id: string,
+    updateCommentDto: UpdateCommentDto,
+  ): Promise<boolean> {
+    return this.commentsRepository.update(id, updateCommentDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} comment`;
+  remove(id: string): Promise<boolean> {
+    return this.commentsRepository.deleteById(id);
   }
 }
