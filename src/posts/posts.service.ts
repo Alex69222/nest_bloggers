@@ -5,10 +5,15 @@ import { PostsRepository } from './posts.repository';
 import { OutputPostDto } from './dto/output-post.dto';
 import { PaginationViewType } from '../helpers/transformToPaginationView';
 import { QueryType } from '../helpers/queryHandler';
+import { CreateCommentDto } from '../comments/dto/create-comment.dto';
+import { CommentsRepository } from '../comments/entities/comments.repository';
 
 @Injectable()
 export class PostsService {
-  constructor(private postsRepository: PostsRepository) {}
+  constructor(
+    private postsRepository: PostsRepository,
+    private commentsRepository: CommentsRepository,
+  ) {}
   async create(createPostDto: CreatePostDto): Promise<OutputPostDto> {
     return this.postsRepository.create(createPostDto);
   }
@@ -27,5 +32,15 @@ export class PostsService {
 
   async remove(id: string): Promise<boolean> {
     return this.postsRepository.remove(id);
+  }
+  async addComment(
+    id: string,
+    user: {
+      userId: string;
+      userName: string;
+    },
+    createCommentDto: CreateCommentDto,
+  ) {
+    return this.commentsRepository.create(id, user, createCommentDto);
   }
 }

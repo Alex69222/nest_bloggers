@@ -11,7 +11,7 @@ import {
   PaginationViewType,
   transformToPaginationView,
 } from '../helpers/transformToPaginationView';
-import { Blog } from '../blogs/entities/blog.entity';
+import { Blog, BlogDocument } from '../blogs/entities/blog.entity';
 
 const returnNameFromPopulation = (doc) => doc.name;
 
@@ -19,7 +19,7 @@ const returnNameFromPopulation = (doc) => doc.name;
 export class PostsRepository {
   constructor(
     @InjectModel(Post.name) private postModel: Model<PostDocument>,
-    @InjectModel(Blog.name) private blogModel: Model<PostDocument>,
+    @InjectModel(Blog.name) private blogModel: Model<BlogDocument>,
   ) {}
   async create(createPostDto: CreatePostDto): Promise<OutputPostDto> {
     const createdPost = new this.postModel({

@@ -14,6 +14,7 @@ import { BlogsRepository } from './blogs/blogs.repository';
 import { Blog, BlogSchema } from './blogs/entities/blog.entity';
 import { TestingModule } from './testing/testing.module';
 import { UsersModule } from './users/users.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { UsersModule } from './users/users.module';
     MongooseModule.forFeature([{ name: Blog.name, schema: BlogSchema }]),
     TestingModule,
     UsersModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [

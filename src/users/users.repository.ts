@@ -56,12 +56,18 @@ export class UsersRepository {
   }
   async findByLoginOrEmail(
     loginOrEmail: string,
-  ): Promise<CreateUserDto | null> {
+  ): Promise<(CreateUserDto & { id: string }) | null> {
     const user = await this.userModel
       .findOne({
         $or: [{ login: loginOrEmail }, { email: loginOrEmail }],
       })
       .lean();
+    return idMapper(user);
+  }
+  async findById(id: string): Promise<OutputUserDto | null> {
+    if (!isValidObjectId(id)) return null;
+    const user = await this.userModel.findById(id).lean();
+    console.log(user);
     return idMapper(user);
   }
   async remove(id: string): Promise<boolean> {
