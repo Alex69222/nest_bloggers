@@ -13,6 +13,8 @@ export class Blog {
   websiteUrl: string;
   @Prop({ required: true })
   createdAt: string;
+  @Prop({ required: true })
+  isMembership: boolean;
 }
 
 export const BlogSchema = SchemaFactory.createForClass(Blog);

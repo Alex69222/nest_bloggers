@@ -25,6 +25,7 @@ export class BlogsRepository implements IBlogsRepository {
   async create(createBlogDto: CreateBlogDto): Promise<OutputBlogDto> {
     const createdBlog = new this.blogModel({
       ...createBlogDto,
+      isMembership: false,
       createdAt: new Date().toISOString(),
     });
     await createdBlog.save();
