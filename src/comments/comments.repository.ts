@@ -35,7 +35,8 @@ export class CommentsRepository {
       },
     });
     await createdComment.save();
-    return idMapper(createdComment.toObject());
+    const { postId: postID, ...rest } = createdComment.toObject();
+    return idMapper(rest);
   }
   async findById(id: string): Promise<OutputCommentDto | null> {
     if (!isValidObjectId(id)) return null;
