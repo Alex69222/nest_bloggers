@@ -14,6 +14,8 @@ export class Comment {
   commentatorInfo: CommentatorInfo;
   @Prop({ required: true })
   createdAt: string;
+  @Prop({ required: true })
+  postId: string;
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);

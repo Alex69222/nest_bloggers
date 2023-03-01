@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Comment, CommentDocument } from './comment.entity';
+import { Comment, CommentDocument } from './entities/comment.entity';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model } from 'mongoose';
-import { CreateCommentDto } from '../dto/create-comment.dto';
-import { idMapper } from '../../helpers/id-mapper';
-import { OutputCommentDto } from '../dto/output-comment.dto';
-import { QueryType } from '../../helpers/queryHandler';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { idMapper } from '../helpers/id-mapper';
+import { OutputCommentDto } from './dto/output-comment.dto';
+import { QueryType } from '../helpers/queryHandler';
 import {
   PaginationViewType,
   transformToPaginationView,
-} from '../../helpers/transformToPaginationView';
-import { UpdateCommentDto } from '../dto/update-comment.dto';
+} from '../helpers/transformToPaginationView';
+import { UpdateCommentDto } from './dto/update-comment.dto';
 
 @Injectable()
 export class CommentsRepository {
@@ -27,6 +27,7 @@ export class CommentsRepository {
   ): Promise<OutputCommentDto> {
     const createdComment = new this.commentModel({
       ...createCommentDto,
+      postId,
       createdAt: new Date().toISOString(),
       commentatorInfo: {
         userId: user.userId,
@@ -38,7 +39,7 @@ export class CommentsRepository {
   }
   async findById(id: string): Promise<OutputCommentDto | null> {
     if (!isValidObjectId(id)) return null;
-    const comment = await this.commentModel.findById(id).lean();
+    const comment = await this.commentModel.findById(id, { postId: 0 }).lean();
     if (!comment) return null;
     return idMapper(comment);
   }
@@ -46,9 +47,9 @@ export class CommentsRepository {
     postId: string,
     query: QueryType,
   ): Promise<PaginationViewType<OutputCommentDto>> {
-    const totalCount = await this.commentModel.count();
+    const totalCount = await this.commentModel.count({ postId });
     const comments = await this.commentModel
-      .find()
+      .find({ postId }, { postId: 0 })
       .sort({ [query.sortBy]: query.sortDirection })
       .skip(query.pageSize * (query.pageNumber - 1))
       .limit(query.pageSize)
