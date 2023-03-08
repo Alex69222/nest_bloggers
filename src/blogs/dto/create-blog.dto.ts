@@ -1,10 +1,4 @@
-import {
-  IsNotEmpty,
-  IsString,
-  IsUrl,
-  MaxLength,
-  Validate,
-} from 'class-validator';
+import { IsNotEmpty, IsString, IsUrl, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { trimValidatedString } from '../../helpers/validation-helpers';
 

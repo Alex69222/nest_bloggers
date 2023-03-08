@@ -15,6 +15,7 @@ import { Blog, BlogSchema } from './blogs/entities/blog.entity';
 import { TestingModule } from './testing/testing.module';
 import { UsersModule } from './users/users.module';
 import { CommentsModule } from './comments/comments.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -29,6 +30,25 @@ import { CommentsModule } from './comments/comments.module';
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => ({
         uri: config.get<string>('database.MONGOOSE_URI'),
+      }),
+    }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        transport: {
+          service: config.get<string>('smtp.service'),
+          host: config.get<string>('smtp.host'),
+          secure: false,
+          port: config.get<number>('smtp.port'),
+          auth: {
+            user: config.get<string>('smtp.user'),
+            pass: config.get<string>('smtp.password'),
+          },
+        },
+        defaults: {
+          from: `"Bloggers social media" <noreply.notifycations@gmail.com>`,
+        },
       }),
     }),
     BlogsModule,

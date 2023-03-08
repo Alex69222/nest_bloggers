@@ -1,26 +1,56 @@
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from './entities/user.entity';
+import { EmailConfirmation, User, UserDocument } from './entities/user.entity';
 import { isValidObjectId, Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { idMapper } from '../helpers/id-mapper';
 import { OutputUserDto } from './dto/output-user.dto';
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { QueryType } from '../helpers/queryHandler';
 import {
   PaginationViewType,
   transformToPaginationView,
 } from '../helpers/transformToPaginationView';
+import { ConfirmationCode } from '../auth/entities/confirmationCode.entity';
+
 @Injectable()
 export class UsersRepository {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
-  async create(createUserDto: CreateUserDto): Promise<OutputUserDto> {
+  async create(
+    createUserDto: CreateUserDto,
+    confirmed?: true,
+    confirmationCode?: string,
+  ): Promise<OutputUserDto> {
+    const emailIsTaken = await this.findByLoginOrEmail(createUserDto.email);
+    const loginIsTaken = await this.findByLoginOrEmail(createUserDto.login);
+    const errors = [];
+    if (emailIsTaken) {
+      errors.push({ message: 'Email is already taken', field: 'email' });
+    }
+    if (loginIsTaken) {
+      errors.push({ message: 'Login is already taken', field: 'login' });
+    }
+    if (errors.length) throw new BadRequestException(errors);
     const createdUser = new this.userModel({
       ...createUserDto,
+      emailConfirmation: {
+        confirmationCode: confirmationCode || '',
+        expirationDate: new Date(
+          new Date().setHours(new Date().getHours() + 1),
+        ).toISOString(),
+        isConfirmed: confirmed || false,
+      },
       createdAt: new Date().toISOString(),
     });
     try {
       await createdUser.save();
-      const { password, ...resultUser } = idMapper(createdUser.toObject());
+      const { password, emailConfirmation, ...resultUser } = idMapper(
+        createdUser.toObject(),
+      );
       return resultUser;
     } catch (e) {
       console.log(e);
@@ -41,7 +71,7 @@ export class UsersRepository {
             { email: { $regex: query.searchEmailTerm, $options: '-i' } },
           ],
         },
-        { password: 0 },
+        { password: 0, emailConfirmation: 0 },
       )
       .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
       .skip(query.pageSize * (query.pageNumber - 1))
@@ -56,7 +86,10 @@ export class UsersRepository {
   }
   async findByLoginOrEmail(
     loginOrEmail: string,
-  ): Promise<(CreateUserDto & { id: string }) | null> {
+  ): Promise<
+    | (CreateUserDto & { id: string; emailConfirmation: EmailConfirmation })
+    | null
+  > {
     const user = await this.userModel
       .findOne({
         $or: [{ login: loginOrEmail }, { email: loginOrEmail }],
@@ -67,14 +100,45 @@ export class UsersRepository {
   async findById(id: string): Promise<OutputUserDto | null> {
     if (!isValidObjectId(id)) return null;
     const user = await this.userModel.findById(id).lean();
-    console.log(user);
     return idMapper(user);
   }
   async remove(id: string): Promise<boolean> {
     if (!isValidObjectId(id)) return false;
     const deletedUser = await this.userModel.findByIdAndDelete(id);
-    console.log(deletedUser);
     if (!deletedUser) return false;
     return true;
+  }
+  async confirmRegistration(code: string) {
+    const user = await this.userModel.findOne({
+      'emailConfirmation.confirmationCode': code,
+    });
+    const errors = [];
+    if (!user) {
+      // throw new HttpException(
+      //   { message: 'Code not found' },
+      //   HttpStatus.BAD_REQUEST,
+      // );
+      errors.push({ message: 'Code not found', field: 'code' });
+    } else if (user.emailConfirmation.isConfirmed === true) {
+      // throw new BadRequestException({
+      //   message: 'Registration is already confirmed',
+      // });
+      errors.push({
+        message: 'Registration is already confirmed',
+        field: 'code',
+      });
+    } else if (new Date() > new Date(user.emailConfirmation.expirationDate)) {
+      // throw new HttpException(
+      //   { message: 'Code is expired. Please, request another one' },
+      //   HttpStatus.BAD_REQUEST,
+      // );
+      errors.push({
+        message: 'Code is expired. Please, request another one',
+        field: 'code',
+      });
+    }
+    if (errors.length) throw new BadRequestException(errors);
+    user.emailConfirmation.isConfirmed = true;
+    await user.save();
   }
 }

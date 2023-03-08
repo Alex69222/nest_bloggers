@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { useContainer, ValidationError } from 'class-validator';
 import { ConfigService } from '@nestjs/config';
+import { HttpExceptionFilter } from './exeption.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

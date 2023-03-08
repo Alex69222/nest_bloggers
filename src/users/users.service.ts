@@ -13,11 +13,19 @@ export class UsersService {
     protected usersRepository: UsersRepository,
     protected hashManager: HashManager,
   ) {}
-  async create(createUserDto: CreateUserDto): Promise<OutputUserDto> {
+  async create(
+    createUserDto: CreateUserDto,
+    confirmed?: true,
+    confirmationCode?: string,
+  ): Promise<OutputUserDto> {
     createUserDto.password = await this.hashManager.generateHash(
       createUserDto.password,
     );
-    return await this.usersRepository.create(createUserDto);
+    return await this.usersRepository.create(
+      createUserDto,
+      confirmed,
+      confirmationCode,
+    );
   }
 
   findAll(query: QueryType): Promise<PaginationViewType<OutputUserDto>> {

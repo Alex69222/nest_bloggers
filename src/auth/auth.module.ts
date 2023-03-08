@@ -10,6 +10,8 @@ import { User, UserSchema } from '../users/entities/user.entity';
 import { HashManager } from '../managers/hashManager';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailManager } from '../managers/mailManager';
+import { UsersService } from '../users/users.service';
 
 @Module({
   imports: [
@@ -31,8 +33,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     BasicStrategy,
     AuthService,
     UsersRepository,
+    UsersService,
     HashManager,
     JwtStrategy,
+    MailManager,
   ],
   controllers: [AuthController],
 })
