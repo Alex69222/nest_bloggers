@@ -141,4 +141,9 @@ export class UsersRepository {
     user.emailConfirmation.isConfirmed = true;
     await user.save();
   }
+  async changeConfirmationCode(email: string, code: string) {
+    const user = await this.userModel.findOne({ email: email });
+    user.emailConfirmation.confirmationCode = code;
+    await user.save();
+  }
 }

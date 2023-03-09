@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -71,5 +72,24 @@ export class AuthService {
   }
   async confirmRegistration(code: string) {
     await this.usersRepository.confirmRegistration(code);
+  }
+  async resendRegistrationConfirmationEmail(email: string) {
+    const user = await this.usersRepository.findByLoginOrEmail(email);
+    if (!user) {
+      throw new BadRequestException([
+        { message: 'Email is not registered', field: 'email' },
+      ]);
+    }
+    if (user.emailConfirmation.isConfirmed) {
+      throw new BadRequestException([
+        { message: 'User is already confirmed', field: 'email' },
+      ]);
+    }
+    const newConfirmationCode = uuidv4();
+    await this.usersRepository.changeConfirmationCode(
+      email,
+      newConfirmationCode,
+    );
+    await this.mailManager.sendRegistrationEmail(email, newConfirmationCode);
   }
 }

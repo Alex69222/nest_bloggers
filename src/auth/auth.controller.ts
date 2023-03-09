@@ -14,6 +14,7 @@ import { LoginDto } from './dto/login-dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { ConfirmationCode } from './entities/confirmationCode.entity';
+import { Email } from './entities/email.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -44,11 +45,18 @@ export class AuthController {
     await this.authService.registration(createUserDto);
     return HttpStatus.NO_CONTENT;
   }
-  // @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Post('/registration-confirmation')
   async confirmRegistration(@Body() body: ConfirmationCode) {
     // await this.authService.confirmRegistration(body.code);
     // return body.code;
     await this.authService.confirmRegistration(body.code);
+    return HttpStatus.NO_CONTENT;
+  }
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('/registration-email-resending')
+  async resendRegistrationEmail(@Body() body: Email) {
+    await this.authService.resendRegistrationConfirmationEmail(body.email);
+    return HttpStatus.NO_CONTENT;
   }
 }
