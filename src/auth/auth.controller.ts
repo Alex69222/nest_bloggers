@@ -31,7 +31,10 @@ export class AuthController {
     const tokens = await this.authService.login(loginDto);
     if (!tokens) throw new UnauthorizedException();
     const [accessToken, refreshToken] = tokens;
-    response.cookie('refreshToken', refreshToken.refreshToken);
+    response.cookie('refreshToken', refreshToken.refreshToken, {
+      httpOnly: true,
+      secure: true,
+    });
     return accessToken;
   }
 
@@ -73,7 +76,10 @@ export class AuthController {
     );
     if (!newTokens) throw new UnauthorizedException();
     const [accessToken, refreshToken] = newTokens;
-    response.cookie('refreshToken', refreshToken.refreshToken);
+    response.cookie('refreshToken', refreshToken.refreshToken, {
+      httpOnly: true,
+      secure: true,
+    });
     return accessToken;
   }
   @HttpCode(HttpStatus.NO_CONTENT)
