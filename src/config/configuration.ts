@@ -14,4 +14,5 @@ export default () => ({
     user: process.env.SMTP_USER,
     password: process.env.SMTP_PASSWORD,
   },
+  cookieSecret: process.env.COOKIE_SECRET || 'secret',
 });
