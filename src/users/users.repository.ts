@@ -147,7 +147,7 @@ export class UsersRepository {
     const user = await this.userModel.findById(userId);
     if (!user.userSessions.find((el) => el.id === sessionId)) return false;
     user.userSessions = user.userSessions.filter((s) => s.id !== sessionId);
-    console.log(sessionId);
+    // console.log(sessionId);
     await user.save();
     return true;
   }
