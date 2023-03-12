@@ -44,13 +44,13 @@ export class UsersRepository {
         ).toISOString(),
         isConfirmed: confirmed || false,
       },
+      userSessions: [],
       createdAt: new Date().toISOString(),
     });
     try {
       await createdUser.save();
-      const { password, emailConfirmation, ...resultUser } = idMapper(
-        createdUser.toObject(),
-      );
+      const { password, emailConfirmation, userSessions, ...resultUser } =
+        idMapper(createdUser.toObject());
       return resultUser;
     } catch (e) {
       console.log(e);
@@ -71,7 +71,7 @@ export class UsersRepository {
             { email: { $regex: query.searchEmailTerm, $options: '-i' } },
           ],
         },
-        { password: 0, emailConfirmation: 0 },
+        { password: 0, emailConfirmation: 0, userSessions: 0 },
       )
       .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
       .skip(query.pageSize * (query.pageNumber - 1))
@@ -114,24 +114,13 @@ export class UsersRepository {
     });
     const errors = [];
     if (!user) {
-      // throw new HttpException(
-      //   { message: 'Code not found' },
-      //   HttpStatus.BAD_REQUEST,
-      // );
       errors.push({ message: 'Code not found', field: 'code' });
     } else if (user.emailConfirmation.isConfirmed === true) {
-      // throw new BadRequestException({
-      //   message: 'Registration is already confirmed',
-      // });
       errors.push({
         message: 'Registration is already confirmed',
         field: 'code',
       });
     } else if (new Date() > new Date(user.emailConfirmation.expirationDate)) {
-      // throw new HttpException(
-      //   { message: 'Code is expired. Please, request another one' },
-      //   HttpStatus.BAD_REQUEST,
-      // );
       errors.push({
         message: 'Code is expired. Please, request another one',
         field: 'code',
@@ -145,5 +134,21 @@ export class UsersRepository {
     const user = await this.userModel.findOne({ email: email });
     user.emailConfirmation.confirmationCode = code;
     await user.save();
+  }
+  async addUserSession(userId: string, sessionId: string) {
+    const user = await this.userModel.findById(userId);
+    user.userSessions.push({ id: sessionId });
+    await user.save();
+  }
+  async removeUserSession(
+    userId: string,
+    sessionId: string,
+  ): Promise<true | false> {
+    const user = await this.userModel.findById(userId);
+    if (!user.userSessions.find((el) => el.id === sessionId)) return false;
+    user.userSessions = user.userSessions.filter((s) => s.id !== sessionId);
+    console.log(sessionId);
+    await user.save();
+    return true;
   }
 }

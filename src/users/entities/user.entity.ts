@@ -12,6 +12,11 @@ export class EmailConfirmation {
   @Prop({ required: true, default: false })
   isConfirmed: boolean;
 }
+@Schema({ versionKey: false, _id: false })
+export class UserSessions {
+  @Prop()
+  id: string;
+}
 
 @Schema({ versionKey: false })
 export class User {
@@ -25,5 +30,7 @@ export class User {
   createdAt: string;
   @Prop({ required: true })
   emailConfirmation: EmailConfirmation;
+  @Prop({ required: true, default: [] })
+  userSessions: UserSessions[];
 }
 export const UserSchema = SchemaFactory.createForClass(User);

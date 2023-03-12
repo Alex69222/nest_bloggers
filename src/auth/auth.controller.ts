@@ -5,7 +5,8 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Request,
+  Req,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { ConfirmationCode } from './entities/confirmationCode.entity';
 import { Email } from './entities/email.entity';
+import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -24,9 +26,15 @@ export class AuthController {
   @Post('/login')
   async login(
     @Body() loginDto: LoginDto,
-  ): Promise<{ accessToken: string } | false> {
-    const accessToken = await this.authService.login(loginDto);
-    if (!accessToken) throw new UnauthorizedException();
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<{ accessToken: string }> {
+    const tokens = await this.authService.login(loginDto);
+    if (!tokens) throw new UnauthorizedException();
+    const [accessToken, refreshToken] = tokens;
+    response.cookie('refreshToken', refreshToken.refreshToken, {
+      httpOnly: true,
+      secure: true,
+    });
     return accessToken;
   }
 
@@ -34,7 +42,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Get('/me')
   async me(
-    @Request() req,
+    @Req() req,
   ): Promise<{ email: string; login: string; userId: string } | null> {
     return this.authService.me(req.user.userId);
   }
@@ -48,8 +56,6 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post('/registration-confirmation')
   async confirmRegistration(@Body() body: ConfirmationCode) {
-    // await this.authService.confirmRegistration(body.code);
-    // return body.code;
     await this.authService.confirmRegistration(body.code);
     return HttpStatus.NO_CONTENT;
   }
@@ -57,6 +63,32 @@ export class AuthController {
   @Post('/registration-email-resending')
   async resendRegistrationEmail(@Body() body: Email) {
     await this.authService.resendRegistrationConfirmationEmail(body.email);
+    return HttpStatus.NO_CONTENT;
+  }
+  @HttpCode(HttpStatus.OK)
+  @Post('/refresh-token')
+  async refreshToken(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<{ accessToken: string }> {
+    const newTokens = await this.authService.handleRefreshToken(
+      request.cookies.refreshToken,
+    );
+    if (!newTokens) throw new UnauthorizedException();
+    const [accessToken, refreshToken] = newTokens;
+    response.cookie('refreshToken', refreshToken.refreshToken, {
+      httpOnly: true,
+      secure: true,
+    });
+    return accessToken;
+  }
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('/logout')
+  async logout(@Req() request: Request) {
+    const successLogout = await this.authService.logout(
+      request.cookies.refreshToken,
+    );
+    if (!successLogout) throw new UnauthorizedException();
     return HttpStatus.NO_CONTENT;
   }
 }
