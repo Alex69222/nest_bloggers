@@ -17,6 +17,7 @@ import { CreateUserDto } from '../users/dto/create-user.dto';
 import { ConfirmationCode } from './entities/confirmationCode.entity';
 import { Email } from './entities/email.entity';
 import { Request, Response } from 'express';
+import { cookieSettings } from '../helpers/cookie-settings';
 
 @Controller('auth')
 export class AuthController {
@@ -26,15 +27,15 @@ export class AuthController {
   @Post('/login')
   async login(
     @Body() loginDto: LoginDto,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<{ accessToken: string }> {
-    const tokens = await this.authService.login(loginDto);
+    const ip = request.ip;
+    const userAgent = request.headers['user-agent'];
+    const tokens = await this.authService.login(loginDto, ip, userAgent);
     if (!tokens) throw new UnauthorizedException();
     const [accessToken, refreshToken] = tokens;
-    response.cookie('refreshToken', refreshToken.refreshToken, {
-      httpOnly: true,
-      secure: true,
-    });
+    response.cookie('refreshToken', refreshToken.refreshToken, cookieSettings);
     return accessToken;
   }
 
@@ -76,10 +77,7 @@ export class AuthController {
     );
     if (!newTokens) throw new UnauthorizedException();
     const [accessToken, refreshToken] = newTokens;
-    response.cookie('refreshToken', refreshToken.refreshToken, {
-      httpOnly: true,
-      secure: true,
-    });
+    response.cookie('refreshToken', refreshToken.refreshToken, cookieSettings);
     return accessToken;
   }
   @HttpCode(HttpStatus.NO_CONTENT)

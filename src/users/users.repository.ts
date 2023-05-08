@@ -4,22 +4,17 @@ import { isValidObjectId, Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { idMapper } from '../helpers/id-mapper';
 import { OutputUserDto } from './dto/output-user.dto';
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { QueryType } from '../helpers/queryHandler';
 import {
   PaginationViewType,
   transformToPaginationView,
 } from '../helpers/transformToPaginationView';
-import { ConfirmationCode } from '../auth/entities/confirmationCode.entity';
 
 @Injectable()
 export class UsersRepository {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+
   async create(
     createUserDto: CreateUserDto,
     confirmed?: true,
@@ -56,6 +51,7 @@ export class UsersRepository {
       console.log(e);
     }
   }
+
   async findAll(query: QueryType): Promise<PaginationViewType<OutputUserDto>> {
     const totalCount = await this.userModel.count({
       $or: [
@@ -84,6 +80,7 @@ export class UsersRepository {
       idMapper(users),
     );
   }
+
   async findByLoginOrEmail(
     loginOrEmail: string,
   ): Promise<
@@ -97,17 +94,20 @@ export class UsersRepository {
       .lean();
     return idMapper(user);
   }
+
   async findById(id: string): Promise<OutputUserDto | null> {
     if (!isValidObjectId(id)) return null;
     const user = await this.userModel.findById(id).lean();
     return idMapper(user);
   }
+
   async remove(id: string): Promise<boolean> {
     if (!isValidObjectId(id)) return false;
     const deletedUser = await this.userModel.findByIdAndDelete(id);
     if (!deletedUser) return false;
     return true;
   }
+
   async confirmRegistration(code: string) {
     const user = await this.userModel.findOne({
       'emailConfirmation.confirmationCode': code,
@@ -130,25 +130,10 @@ export class UsersRepository {
     user.emailConfirmation.isConfirmed = true;
     await user.save();
   }
+
   async changeConfirmationCode(email: string, code: string) {
     const user = await this.userModel.findOne({ email: email });
     user.emailConfirmation.confirmationCode = code;
     await user.save();
-  }
-  async addUserSession(userId: string, sessionId: string) {
-    const user = await this.userModel.findById(userId);
-    user.userSessions.push({ id: sessionId });
-    await user.save();
-  }
-  async removeUserSession(
-    userId: string,
-    sessionId: string,
-  ): Promise<true | false> {
-    const user = await this.userModel.findById(userId);
-    if (!user.userSessions.find((el) => el.id === sessionId)) return false;
-    user.userSessions = user.userSessions.filter((s) => s.id !== sessionId);
-    // console.log(sessionId);
-    await user.save();
-    return true;
   }
 }

@@ -3,8 +3,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BlogsModule } from './blogs/blogs.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import configuration from './config/configuration';
-import { APP_FILTER } from '@nestjs/core';
+import configuration, { ConfigType } from './config/configuration';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { HttpExceptionFilter } from './exeption.filter';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PostsModule } from './posts/posts.module';
@@ -16,21 +16,26 @@ import { TestingModule } from './testing/testing.module';
 import { UsersModule } from './users/users.module';
 import { CommentsModule } from './comments/comments.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { DevicesModule } from './devices/devices.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerBehindProxyGuard } from './guards/throttler-behind-proxy.guard';
 
 @Module({
   imports: [
     AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      cache: true,
       load: [configuration],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (config: ConfigService) => ({
-        uri: config.get<string>('database.MONGOOSE_URI'),
-      }),
+      useFactory: async (config: ConfigService<ConfigType>) => {
+        const databaseSettings = config.get('database', { infer: true });
+        return {
+          uri: databaseSettings.MONGOOSE_URI,
+        };
+      },
     }),
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -57,6 +62,11 @@ import { MailerModule } from '@nestjs-modules/mailer';
     TestingModule,
     UsersModule,
     CommentsModule,
+    DevicesModule,
+    ThrottlerModule.forRoot({
+      ttl: 10,
+      limit: 5,
+    }),
   ],
   controllers: [AppController],
   providers: [
@@ -67,6 +77,10 @@ import { MailerModule } from '@nestjs-modules/mailer';
       useClass: HttpExceptionFilter,
     },
     { provide: 'IBlogsRepository', useClass: BlogsRepository },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerBehindProxyGuard,
+    },
   ],
 })
 export class AppModule {}

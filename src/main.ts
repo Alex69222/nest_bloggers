@@ -4,13 +4,19 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { useContainer, ValidationError } from 'class-validator';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { ConfigType } from './config/configuration';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  const configService = app.get(ConfigService);
-  const port = configService.get('port');
-  const cookieSecret = configService.get('cookieSecret');
+  const configService = app.get(ConfigService<ConfigType>);
+  const port = configService.get('apiSettings', { infer: true }).port;
+  const cookieSecret = configService.get('tokenSettings', {
+    infer: true,
+  }).cookieSecret;
+
+  app.set('trust proxy', true);
   app.setGlobalPrefix('api');
   app.use(cookieParser(cookieSecret));
   app.useGlobalPipes(

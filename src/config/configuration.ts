@@ -1,9 +1,19 @@
-export default () => ({
-  port: parseInt(process.env.PORT) || 5000,
-  hashSalt: parseInt(process.env.HASH_SALT) || 13,
-  jwtSecret: process.env.JWT_SECRET || '666',
-  jwtExpirationTime: process.env.JWT_EXPIRATION_TIME || '10s',
-  jwtRefreshExpirationTime: process.env.JWT_REFRESH_EXPIRATION_TIME || '20s',
+import { config } from 'dotenv';
+config();
+
+export type ConfigType = typeof configuration;
+
+const configuration = {
+  apiSettings: {
+    port: parseInt(process.env.PORT) || 5000,
+  },
+  tokenSettings: {
+    hashSalt: parseInt(process.env.HASH_SALT) || 13,
+    jwtSecret: process.env.JWT_SECRET || '666',
+    jwtExpirationTime: process.env.JWT_EXPIRATION_TIME || '10s',
+    jwtRefreshExpirationTime: process.env.JWT_REFRESH_EXPIRATION_TIME || '20s',
+    cookieSecret: process.env.COOKIE_SECRET || 'secret',
+  },
   database: {
     MONGOOSE_URI: process.env.MONGOOSE_URI,
   },
@@ -14,5 +24,6 @@ export default () => ({
     user: process.env.SMTP_USER,
     password: process.env.SMTP_PASSWORD,
   },
-  cookieSecret: process.env.COOKIE_SECRET || 'secret',
-});
+};
+
+export default () => configuration;

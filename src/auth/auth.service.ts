@@ -14,11 +14,12 @@ import { MailManager } from '../managers/mailManager';
 import { UsersService } from '../users/users.service';
 import { v4 as uuidv4 } from 'uuid';
 import { ConfigService } from '@nestjs/config';
+import { DevicesService } from '../devices/devices.service';
 
-type RefreshToken = {
+export type RefreshToken = {
   sub: string;
   userName: string;
-  sessionId: string;
+  deviceId: string;
   iat: number;
   exp: number;
 };
@@ -31,28 +32,35 @@ export class AuthService {
     private jwtService: JwtService,
     protected mailManager: MailManager,
     protected configService: ConfigService,
+    protected deviceService: DevicesService,
   ) {}
   async makeAccessAndRefreshTokens(
     userId: string,
     userLogin: string,
+    deviceId: string,
   ): Promise<[{ accessToken: string }, { refreshToken: string }]> {
-    const sessionId = uuidv4();
     const accessPayload = { sub: userId, userName: userLogin };
-    const refreshPayload2 = { sub: userId, userName: userLogin, sessionId };
-    await this.usersRepository.addUserSession(userId, sessionId);
+    const refreshPayload = { sub: userId, userName: userLogin, deviceId };
+
+    const accessToken = this.jwtService.sign(accessPayload);
+    const refreshToken = this.jwtService.sign(refreshPayload, {
+      expiresIn: this.configService.get<string>(
+        'tokenSettings.jwtRefreshExpirationTime',
+      ),
+    });
     return [
       {
-        accessToken: this.jwtService.sign(accessPayload),
+        accessToken,
       },
       {
-        refreshToken: this.jwtService.sign(refreshPayload2, {
-          expiresIn: this.configService.get<string>('jwtRefreshExpirationTime'),
-        }),
+        refreshToken,
       },
     ];
   }
   async login(
     loginDto: LoginDto,
+    ip: string,
+    userAgent: string,
   ): Promise<[{ accessToken: string }, { refreshToken: string }] | false> {
     const user = await this.usersRepository.findByLoginOrEmail(
       loginDto.loginOrEmail,
@@ -64,7 +72,23 @@ export class AuthService {
       user.password,
     );
     if (!passwordMatched) return false;
-    return this.makeAccessAndRefreshTokens(user.id, user.login);
+    const deviceId = uuidv4();
+    const tokens = await this.makeAccessAndRefreshTokens(
+      user.id,
+      user.login,
+      deviceId,
+    );
+    const { exp } = <RefreshToken>(
+      this.jwtService.decode(tokens[1].refreshToken)
+    );
+    await this.deviceService.createUserSession(
+      user.id,
+      deviceId,
+      exp,
+      ip,
+      userAgent,
+    );
+    return tokens;
   }
 
   async me(
@@ -126,32 +150,40 @@ export class AuthService {
     refreshToken: string,
   ): Promise<[{ accessToken: string }, { refreshToken: string }] | false> {
     if (!refreshToken) return false;
-    const decodedToken = <RefreshToken>this.jwtService.decode(refreshToken);
-    const { sessionId, sub: userId, userName } = decodedToken;
-    if (!sessionId) return false;
-    const sessionRemoved = await this.usersRepository.removeUserSession(
-      userId,
-      sessionId,
-    );
-    if (!sessionRemoved) return false;
     try {
-      await this.jwtService.verifyAsync(refreshToken);
-      return this.makeAccessAndRefreshTokens(userId, userName);
+      console.log('verification');
+      const verification = await this.jwtService.verifyAsync(refreshToken);
+      console.log(verification);
     } catch (e) {
       console.log(e);
       return false;
     }
+    const decodedToken = <RefreshToken>this.jwtService.decode(refreshToken);
+    const { deviceId, sub: userId, userName } = decodedToken;
+    const session = this.deviceService.findSessionByDeviceId(deviceId);
+    if (!session) throw new UnauthorizedException();
+    if (!deviceId) return false;
+    const tokens = await this.makeAccessAndRefreshTokens(
+      userId,
+      userName,
+      deviceId,
+    );
+    const { exp } = <RefreshToken>(
+      this.jwtService.decode(tokens[1].refreshToken)
+    );
+    await this.deviceService.updateUserSession(userId, deviceId, exp);
+    return tokens;
   }
   async logout(refreshToken: string) {
     if (!refreshToken) return false;
     const decodedToken = <RefreshToken>this.jwtService.decode(refreshToken);
-    const { sessionId, sub: userId } = decodedToken;
-    if (!sessionId) return false;
+    const { deviceId } = decodedToken;
+    // if (!deviceId) return false;
     try {
       await this.jwtService.verifyAsync(refreshToken);
-      const sessionRemoved = await this.usersRepository.removeUserSession(
-        userId,
-        sessionId,
+      const sessionRemoved = await this.deviceService.deleteUserSession(
+        refreshToken,
+        deviceId,
       );
       return sessionRemoved;
     } catch (e) {
