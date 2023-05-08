@@ -37,11 +37,11 @@ export class PostsRepository {
 
   async findAll(query: QueryType): Promise<PaginationViewType<OutputPostDto>> {
     const totalCount = await this.postModel.count({
-      title: { $regex: query.searchNameTerm, $options: '-i' },
+      title: { $regex: query.searchNameTerm, $options: 'i' },
     });
     const posts = await this.postModel
       .aggregate([
-        { $match: { title: { $regex: query.searchNameTerm, $options: '-i' } } },
+        { $match: { title: { $regex: query.searchNameTerm, $options: 'i' } } },
         {
           $lookup: {
             from: 'blogs',

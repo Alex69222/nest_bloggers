@@ -55,16 +55,16 @@ export class UsersRepository {
   async findAll(query: QueryType): Promise<PaginationViewType<OutputUserDto>> {
     const totalCount = await this.userModel.count({
       $or: [
-        { login: { $regex: query.searchLoginTerm, $options: '-i' } },
-        { email: { $regex: query.searchEmailTerm, $options: '-i' } },
+        { login: { $regex: query.searchLoginTerm, $options: 'i' } },
+        { email: { $regex: query.searchEmailTerm, $options: 'i' } },
       ],
     });
     const users = await this.userModel
       .find(
         {
           $or: [
-            { login: { $regex: query.searchLoginTerm, $options: '-i' } },
-            { email: { $regex: query.searchEmailTerm, $options: '-i' } },
+            { login: { $regex: query.searchLoginTerm, $options: 'i' } },
+            { email: { $regex: query.searchEmailTerm, $options: 'i' } },
           ],
         },
         { password: 0, emailConfirmation: 0, userSessions: 0 },

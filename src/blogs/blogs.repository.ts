@@ -34,10 +34,10 @@ export class BlogsRepository implements IBlogsRepository {
 
   async findAll(query: QueryType): Promise<PaginationViewType<OutputBlogDto>> {
     const totalCount = await this.blogModel.count({
-      name: { $regex: query.searchNameTerm, $options: '-i' },
+      name: { $regex: query.searchNameTerm, $options: 'i' },
     });
     const blogs = await this.blogModel
-      .find({ name: { $regex: query.searchNameTerm, $options: '-i' } })
+      .find({ name: { $regex: query.searchNameTerm, $options: 'i' } })
       .sort([[query.sortBy, query.sortDirection === 'asc' ? 1 : -1]])
       .skip(query.pageSize * (query.pageNumber - 1))
       .limit(query.pageSize)
