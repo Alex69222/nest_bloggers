@@ -18,6 +18,7 @@ import { ConfirmationCode } from './entities/confirmationCode.entity';
 import { Email } from './entities/email.entity';
 import { Request, Response } from 'express';
 import { cookieSettings } from '../helpers/cookie-settings';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -47,7 +48,7 @@ export class AuthController {
   ): Promise<{ email: string; login: string; userId: string } | null> {
     return this.authService.me(req.user.userId);
   }
-
+  @Throttle()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post('/registration')
   async registration(@Body() createUserDto: CreateUserDto) {

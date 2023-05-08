@@ -10,8 +10,8 @@ const configuration = {
   tokenSettings: {
     hashSalt: parseInt(process.env.HASH_SALT) || 13,
     jwtSecret: process.env.JWT_SECRET || '666',
-    jwtExpirationTime: process.env.JWT_EXPIRATION_TIME || '10s',
-    jwtRefreshExpirationTime: process.env.JWT_REFRESH_EXPIRATION_TIME || '20s',
+    jwtExpirationTime: process.env.JWT_EXPIRATION_TIME || '1h',
+    jwtRefreshExpirationTime: process.env.JWT_REFRESH_EXPIRATION_TIME || '2h',
     cookieSecret: process.env.COOKIE_SECRET || 'secret',
   },
   database: {
