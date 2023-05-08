@@ -66,7 +66,7 @@ export class AuthService {
       loginDto.loginOrEmail,
     );
     if (!user) return false;
-    if (!user.emailConfirmation.isConfirmed) return false;
+    // if (!user.emailConfirmation.isConfirmed) return false;
     const passwordMatched = await this.hashManager.checkPassword(
       loginDto.password,
       user.password,
