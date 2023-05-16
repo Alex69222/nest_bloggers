@@ -20,7 +20,7 @@ export class DevicesController {
   @HttpCode(HttpStatus.OK)
   @Get()
   findAll(@Req() req) {
-    return this.devicesService.getUserSessions(req.user.userId);
+    return this.devicesService.getUserSessions(req.user.id);
   }
 
   @UseGuards(RefreshTokenGuard)
