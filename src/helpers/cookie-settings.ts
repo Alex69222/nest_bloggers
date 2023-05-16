@@ -1,4 +1,4 @@
 export const cookieSettings = {
-  // httpOnly: true,
-  // secure: true,
+  httpOnly: true,
+  secure: true,
 };
