@@ -11,7 +11,9 @@ import {
 } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 import { RefreshTokenGuard } from '../guards/refresh-token.guard';
+import { SkipThrottle } from '@nestjs/throttler';
 
+@SkipThrottle()
 @Controller('security/devices')
 export class DevicesController {
   constructor(private readonly devicesService: DevicesService) {}

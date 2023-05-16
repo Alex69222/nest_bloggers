@@ -83,6 +83,9 @@ export class DevicesService {
       throw new UnauthorizedException();
     }
     const { sub: userId } = <RefreshToken>this.jwtService.decode(refreshToken);
+    // find device
+    // if !device => 404
+    // device.userId !== token.userId => 403
     return this.devicesRepository.deleteUserSession(userId, deviceId);
   }
   async findSessionByDeviceId(deviceId: string) {
