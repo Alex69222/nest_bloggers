@@ -1,35 +1,36 @@
 import {
   Controller,
-  Get,
-  Param,
   Delete,
-  UseGuards,
-  Req,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Req,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { DevicesService } from './devices.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RefreshTokenGuard } from '../guards/refresh-token.guard';
 
 @Controller('security/devices')
 export class DevicesController {
   constructor(private readonly devicesService: DevicesService) {}
-  @UseGuards(JwtAuthGuard)
+
+  @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
   @Get()
   findAll(@Req() req) {
     return this.devicesService.getUserSessions(req.user.userId);
   }
-  @UseGuards(JwtAuthGuard)
+
+  @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   deleteSession(@Param('id') id: string, @Req() req) {
-    if (!req.cookies.refreshToken) throw new UnauthorizedException();
-
     return this.devicesService.deleteUserSession(req.cookies.refreshToken, id);
   }
-  @UseGuards(JwtAuthGuard)
+
+  @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete()
   deleteAllSessionsExceptCurrent(@Req() req) {

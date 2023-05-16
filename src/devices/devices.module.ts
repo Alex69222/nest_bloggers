@@ -5,12 +5,17 @@ import { DevicesRepository } from './devices.repository';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Device, DeviceSchema } from './entities/device.entity';
 import { JwtService } from '@nestjs/jwt';
+import { UsersRepository } from '../users/users.repository';
+import { User, UserSchema } from '../users/entities/user.entity';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Device.name, schema: DeviceSchema }]),
+    MongooseModule.forFeature([
+      { name: Device.name, schema: DeviceSchema },
+      { name: User.name, schema: UserSchema },
+    ]),
   ],
   controllers: [DevicesController],
-  providers: [DevicesService, DevicesRepository, JwtService],
+  providers: [DevicesService, DevicesRepository, JwtService, UsersRepository],
 })
 export class DevicesModule {}
